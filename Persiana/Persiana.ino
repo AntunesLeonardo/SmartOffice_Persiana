@@ -1,31 +1,47 @@
+/* 
+ * Programa para controle de persiana em ambiente de escritório.
+ * Placa ESP32.
+ * Autor: Leonardo A. Antunes - PTI
+ */
+// Inclusão de bibliotecas --------------------------------------
 #include <RotaryEncoder.h>
 #include <EEPROM.h>
 
-#define Bencod 2
-#define pHa 18
-#define pHb 19
+// Definição de portas ------------------------------------------
+#define Bencod 2         // Botão encoder
+#define encoder1 32      // Porta 1 leitura encoder
+#define encoder2 33      // Porta 2 leitura encoder
+#define pHa 18           // Ponte H, porta A
+#define pHb 19           // Ponte H, porta B
 
-#define savesNumber 1
-#define waitSeconds 10
+// Valores EEPROM -----------------------------------------------
+#define savesNumber 1    // Número de variáveis salvas
+#define waitSeconds 10   // Tempo em stand-by até salvar
 
-// Pinos de ligacao do encoder
-RotaryEncoder encoder(32, 33);
+// Pinos de ligacao do encoder ----------------------------------
+RotaryEncoder encoder(encoder1, encoder2);
 
-// Variaveis de posicionamento
-int newPos = 0;
-int X = 0;
-int request = 0;
+// Variaveis de posicionamento ----------------------------------
+int newPos = 0;          // Posição nova - identifica movimento
+int X = 0;               // Posição global
+int request = 0;         // Pedido para movimentar
 
-// TESTE:
+// TESTE: --------------------------------------------(temporário)
 unsigned int i = 0;
 int testRequest[5] = {50, 100, 70, 30, 0};
 
-// Variáveis de tempo EEPROM
-int inicialTime = 0;
-int currentTime = 0;
-unsigned int verify = 0;
+// Variáveis de tempo EEPROM ------------------------------------
+int inicialTime = 0;     // Tempo inicial
+int currentTime = 0;     // Tempo atual
+unsigned int verify = 0; // Verificação de estado
 
-// Função leitura encoder ---------------------------------------------------
+// Função leitura encoder ======================================
+/*
+ * Lê nava posição do encoder e atualiza a variável.
+ * X atualizado e print serial da posição global (X).
+ * Caso a posição se mantenha estática por um período, a última
+ * posição é salva no EEPROM.
+ */
 void encodUpdate () {
   static int pos = 0;
   encoder.tick();
@@ -61,6 +77,9 @@ void encodUpdate () {
 }
 
 // Funções individuais - Desce - Sobe - Para --------------------------------
+/*
+ * Controle do motor pelas porta da ponte H.
+ */
 void wDown () {
   digitalWrite(pHa, HIGH);
   digitalWrite(pHb, LOW);
@@ -78,7 +97,10 @@ void wStop () {
   Serial.println(request);
 }
 
-// Controle sobre o acionamento do motor-------------------------------------
+// Controle sobre o acionamento do motor ------------------------------------
+/*
+ * Identifica pedidos de movimentação e coordena a movimentação.
+ */
 void windowControl () {
   if (request == X){
     wStop();
@@ -94,14 +116,18 @@ void windowControl () {
 
 // SETUP --------------------------------------------------------------------
 void setup() {
+  // Definição de estado das portas
   pinMode(Bencod, INPUT);
   pinMode(pHa, OUTPUT);
   pinMode(pHb, OUTPUT);
+
+  // Inicío serial
   Serial.begin(115200);
 
+  // Início EEPROM - leitura do valor salvo
   EEPROM.begin(savesNumber);
-  X = EEPROM.read(0);
-  Serial.println(X);
+  request = EEPROM.read(0);
+  Serial.println(request);
   
   Serial.println("Gire o encoder....");
   Serial.println(request);
