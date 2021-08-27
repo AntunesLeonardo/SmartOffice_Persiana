@@ -26,6 +26,41 @@ int currentTime = 0;     // Tempo atual
 unsigned int verify = 0; // Verificação de estado
 int serverRequest = 0;
 
+// Função leitura encoder ======================================
+//void encodUpdate () {
+//  static int pos = 0;
+//  encoder.tick();
+//  int newPos = encoder.getPosition();
+//  
+//  //Se a posicao foi alterada, mostra o valor no Serial Monitor
+//  if (pos < newPos) {
+//    pos = newPos;
+//    X -= 1;
+//    inicialTime = millis();
+//    verify = 1;
+//    Serial.println(X);
+//  } else if (pos > newPos) {
+//    pos = newPos;
+//    X += 1;
+//    inicialTime = millis();
+//    verify = 1;
+//    Serial.println(X);
+//  }
+//  
+//  // Teste para salvar no EEPROM
+//  currentTime = millis();
+//  if (((inicialTime + waitSeconds * 1000) <= currentTime) && verify == 1) {
+//    Serial.println("Salvo");
+//    if (X != EEPROM.read(0)) {
+//      Serial.print(X);
+//      Serial.println(" Atualizado");
+//      EEPROM.write(0, X);
+//      EEPROM.commit();
+//    }
+//    verify = 0;
+//  }
+//}
+
 int encoderUpdate() {
   encoder.tick();
   int newPos = encoder.getPosition();
