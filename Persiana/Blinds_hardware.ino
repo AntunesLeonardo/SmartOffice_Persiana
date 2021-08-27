@@ -12,6 +12,11 @@ unsigned int encoderA[1] = {32};                 // Encoder analog read port A
 unsigned int encoderB[1] = {33};                 // Encoder analog read port B
 unsigned int motorA[1] = {18};                   // Motor controler write port A
 unsigned int motorB[1] = {19};                   // Motor controler write port B
+unsigned int RSpin[1] = {4};
+
+unsigned int encButton = 2;
+int valTest[2] = {0, 100};
+unsigned int verify = 0; // Verificação de estado
 
 // EEPROM Values -----------------------------------------------
 #define savesNumber 1    // Número de variáveis salvas
@@ -23,8 +28,9 @@ RotaryEncoder encoder(encoderA[0], encoderB[0]);
 // Variáveis de tempo EEPROM ------------------------------------
 int inicialTime = 0;     // Tempo inicial
 int currentTime = 0;     // Tempo atual
-unsigned int verify = 0; // Verificação de estado
+// unsigned int verify = 0; // Verificação de estado
 int serverRequest = 0;
+int blindPosition = 0;
 
 // Função leitura encoder ======================================
 //void encodUpdate () {
@@ -61,10 +67,20 @@ int serverRequest = 0;
 //  }
 //}
 
-int encoderUpdate() {
+void encoderUpdate() {
+  static int pos = 0;
   encoder.tick();
   int newPos = encoder.getPosition();
-  return newPos;
+
+  if (pos < newPos) {
+    pos = newPos;
+    blindPosition--;
+    Serial.println(blindPosition);
+  } else if (pos > newPos) {
+    pos = newPos;
+    blindPosition++;
+    Serial.println(blindPosition);
+  }
 }
 
 // Funções individuais - Desce - Sobe - Para --------------------------------
@@ -91,7 +107,7 @@ void blindStop(unsigned int i) {
  * Identifica pedidos de movimentação e coordena a movimentação.
  */
 void blindControl(unsigned int blindID, int request) {
-  int blindPosition = encoderUpdate();
+  encoderUpdate();
   if (request == blindPosition){
     blindStop(blindID);
     
@@ -108,6 +124,14 @@ void blindControl(unsigned int blindID, int request) {
   }
 }
 
+void reedSwitch(unsigned int i) {
+  while(digitalRead(RSpin[0]) == LOW){
+    blindUp(i);
+  }
+  blindStop(i);
+  blindPosition = 0;
+}
+
 // SETUP --------------------------------------------------------------------
 void setup() {
   // Pin mode definition
@@ -115,6 +139,7 @@ void setup() {
     pinMode(motorA[i], OUTPUT);
     pinMode(motorB[i], OUTPUT);
   }
+  pinMode(encButton, INPUT);
 
   // Serial begin
   Serial.begin(115200);
@@ -123,9 +148,16 @@ void setup() {
   EEPROM.begin(savesNumber);
   serverRequest = EEPROM.read(0);
   Serial.println(serverRequest);
+
+  reedSwitch(blindNumber);
 }
 
 // LOOP ---------------------------------------------------------------------
 void loop() {
   blindControl(0, serverRequest);
+
+  if(digitalRead(encButton) == LOW){
+    verify = !verify;
+    serverRequest = valTest[verify];
+  }
 }
