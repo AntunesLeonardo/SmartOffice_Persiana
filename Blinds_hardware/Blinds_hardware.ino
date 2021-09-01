@@ -32,41 +32,6 @@ int currentTime = 0;     // Tempo atual
 int serverRequest = 0;
 int blindPosition = 0;
 
-// Função leitura encoder ======================================
-//void encodUpdate () {
-//  static int pos = 0;
-//  encoder.tick();
-//  int newPos = encoder.getPosition();
-//  
-//  //Se a posicao foi alterada, mostra o valor no Serial Monitor
-//  if (pos < newPos) {
-//    pos = newPos;
-//    X -= 1;
-//    inicialTime = millis();
-//    verify = 1;
-//    Serial.println(X);
-//  } else if (pos > newPos) {
-//    pos = newPos;
-//    X += 1;
-//    inicialTime = millis();
-//    verify = 1;
-//    Serial.println(X);
-//  }
-//  
-//  // Teste para salvar no EEPROM
-//  currentTime = millis();
-//  if (((inicialTime + waitSeconds * 1000) <= currentTime) && verify == 1) {
-//    Serial.println("Salvo");
-//    if (X != EEPROM.read(0)) {
-//      Serial.print(X);
-//      Serial.println(" Atualizado");
-//      EEPROM.write(0, X);
-//      EEPROM.commit();
-//    }
-//    verify = 0;
-//  }
-//}
-
 void encoderUpdate() {
   static int pos = 0;
   encoder.tick();
@@ -84,9 +49,6 @@ void encoderUpdate() {
 }
 
 // Funções individuais - Desce - Sobe - Para --------------------------------
-/*
- * Controle do motor pelas porta da ponte H.
- */
 void blindDown(unsigned int i) {
   Serial.println("Motor - abaixar");
   digitalWrite(motorA, HIGH);
@@ -106,9 +68,6 @@ void blindStop(unsigned int i) {
 }
 
 // Controle sobre o acionamento do motor ------------------------------------
-/*
- * Identifica pedidos de movimentação e coordena a movimentação.
- */
 void blindControl(unsigned int blindID, int request) {
   encoderUpdate();
   Serial.print(blindPosition);
@@ -146,10 +105,6 @@ void reedSwitch(unsigned int i) {
 // SETUP --------------------------------------------------------------------
 void setup() {
   // Pin mode definition
-  //for(int i=0; i<blindNumber; i++){
-  //  pinMode(motorA[i], OUTPUT);
-  //  pinMode(motorB[i], OUTPUT);
-  //}
   pinMode(motorA, OUTPUT);
   pinMode(motorB, OUTPUT);
   pinMode(encButton, INPUT);
