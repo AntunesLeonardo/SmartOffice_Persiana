@@ -8,11 +8,11 @@
 
 // Pinout definition -------------------------------------------
 #define blindNumber 1
-unsigned int encoderA[1] = {32};                 // Encoder analog read port A
-unsigned int encoderB[1] = {33};                 // Encoder analog read port B
-unsigned int motorA[1] = {18};                   // Motor controler write port A
-unsigned int motorB[1] = {19};                   // Motor controler write port B
-unsigned int RSpin[1] = {4};
+unsigned int encoderA = 32;                 // Encoder analog read port A
+unsigned int encoderB = 33;                 // Encoder analog read port B
+unsigned int motorA = 18;                   // Motor controler write port A
+unsigned int motorB = 19;                   // Motor controler write port B
+unsigned int RSpin = 4;
 
 unsigned int encButton = 2;
 int valTest[2] = {0, 100};
@@ -23,7 +23,7 @@ unsigned int verify = 0; // Verificação de estado
 #define waitSeconds 10   // Tempo em stand-by até salvar
 
 // Encoder pinout ----------------------------------------------
-RotaryEncoder encoder(encoderA[0], encoderB[0]);
+RotaryEncoder encoder(encoderA, encoderB);
 
 // Variáveis de tempo EEPROM ------------------------------------
 int inicialTime = 0;     // Tempo inicial
@@ -88,18 +88,21 @@ void encoderUpdate() {
  * Controle do motor pelas porta da ponte H.
  */
 void blindDown(unsigned int i) {
-  digitalWrite(motorA[i], HIGH);
-  digitalWrite(motorB[i], LOW);
+  Serial.println("Motor - abaixar");
+  digitalWrite(motorA, HIGH);
+  digitalWrite(motorB, LOW);
 }
 
 void blindUp(unsigned int i) {
-  digitalWrite(motorA[i], LOW);
-  digitalWrite(motorB[i], HIGH);
+  Serial.println("Motor - subir");
+  digitalWrite(motorA, LOW);
+  digitalWrite(motorB, HIGH);
 }
 
 void blindStop(unsigned int i) {
-  digitalWrite(motorA[i], LOW);
-  digitalWrite(motorB[i], LOW);
+  Serial.println("Motor - parar");
+  digitalWrite(motorA, LOW);
+  digitalWrite(motorB, LOW);
 }
 
 // Controle sobre o acionamento do motor ------------------------------------
@@ -108,6 +111,9 @@ void blindStop(unsigned int i) {
  */
 void blindControl(unsigned int blindID, int request) {
   encoderUpdate();
+  Serial.print(blindPosition);
+  Serial.print("  ->  ");
+  Serial.println(request);
   if (request == blindPosition){
     blindStop(blindID);
     
@@ -125,20 +131,28 @@ void blindControl(unsigned int blindID, int request) {
 }
 
 void reedSwitch(unsigned int i) {
-  while(digitalRead(RSpin[0]) == LOW){
+  Serial.println("Aguardando Reed Switch...");
+  while(digitalRead(RSpin) != HIGH){
+    Serial.println(digitalRead(RSpin));
     blindUp(i);
+    delay(1);
   }
   blindStop(i);
   blindPosition = 0;
+  Serial.print("Reed Switch confirmado  ");
+  Serial.println(blindPosition);
 }
 
 // SETUP --------------------------------------------------------------------
 void setup() {
   // Pin mode definition
-  for(int i=0; i<blindNumber; i++){
-    pinMode(motorA[i], OUTPUT);
-    pinMode(motorB[i], OUTPUT);
-  }
+  //for(int i=0; i<blindNumber; i++){
+  //  pinMode(motorA[i], OUTPUT);
+  //  pinMode(motorB[i], OUTPUT);
+  //}
+  pinMode(motorA, OUTPUT);
+  pinMode(motorB, OUTPUT);
+  pinMode(motorPWM, OUTPUT);
   pinMode(encButton, INPUT);
 
   // Serial begin
@@ -160,4 +174,5 @@ void loop() {
     verify = !verify;
     serverRequest = valTest[verify];
   }
+  delay(1);
 }
