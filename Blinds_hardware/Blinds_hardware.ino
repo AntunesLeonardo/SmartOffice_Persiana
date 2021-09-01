@@ -152,7 +152,6 @@ void setup() {
   //}
   pinMode(motorA, OUTPUT);
   pinMode(motorB, OUTPUT);
-  pinMode(motorPWM, OUTPUT);
   pinMode(encButton, INPUT);
 
   // Serial begin
