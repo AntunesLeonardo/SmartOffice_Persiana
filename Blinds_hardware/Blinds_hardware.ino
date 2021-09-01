@@ -1,39 +1,59 @@
-// Automatic blinds control for offices - hardware.
-// Board: ESP32.
-// Author: Leonardo A. Antunes - PTI
+/**
+ * @file Blinds_hardware.ino
+ * 
+ * @mainpage Hardware control for automated blinds
+ * 
+ * @section description Description
+ * Sketch for reading encoder position, and controling motor according to position request.
+ * 
+ * @section circuit Circuit
+ * - ESP32 DevKit V1.
+ * - Rotary encoder module KY-040.
+ * - Motor driver L298N.
+ * - Reed Switch.
+ * - 1K Resistor (Reed Switch pull down).
+ * - 220 Resistor (Encoder button pull up).
+ * 
+ * @section libraries Libraries
+ * - RotaryEncoder.h (https://github.com/mathertel/RotaryEncoder).
+ * - EEPROM.h (https://github.com/PaulStoffregen/EEPROM).
+ * 
+ * @section author Author
+ * - Created by Leonardo A Antunes
+ * - https://github.com/AntunesLeonardo
+ */
  
-// Library -----------------------------------------------------
+// Libraries ---------------------------------------------------
 #include <RotaryEncoder.h>
 #include <EEPROM.h>
 
-// Pinout definition -------------------------------------------
-#define blindNumber 1
-unsigned int encoderA = 32;                 // Encoder analog read port A
-unsigned int encoderB = 33;                 // Encoder analog read port B
-unsigned int motorA = 18;                   // Motor controler write port A
-unsigned int motorB = 19;                   // Motor controler write port B
-unsigned int RSpin = 4;
+// Pinout constants --------------------------------------------
+const unsigned int encoderA = 32;                ///< Encoder input port A pin
+const unsigned int encoderB = 33;                ///< Encoder input port B pin
+const unsigned int motorA = 18;                  ///< Motor controler write port A pin
+const unsigned int motorB = 19;                  ///< Motor controler write port B pin
+const unsigned int RSpin = 4;                    ///< Reed Switch input pin
 
-unsigned int encButton = 2;
-int valTest[2] = {0, 100};
-unsigned int verify = 0; // Verificação de estado
+const unsigned int encButton = 2;                ///< Encoder button pin (testing)
 
-// EEPROM Values -----------------------------------------------
-#define savesNumber 1    // Número de variáveis salvas
-#define waitSeconds 10   // Tempo em stand-by até salvar
+// Variables ---------------------------------------------------
+int serverRequest = 0;                           ///< Position request from server - WIP
+int blindPosition = 0;                           ///< Current position of the blinds
+
+int valTest[2] = {0, 100};                       ///< Fake request values (testing)
+unsigned int verify = 0;                         ///< Status verification (testing)
+
+// Defines -----------------------------------------------------
+#define blindsNumber 1                           ///< Number of blinds conected
 
 // Encoder pinout ----------------------------------------------
-RotaryEncoder encoder(encoderA, encoderB);
+RotaryEncoder encoder(encoderA, encoderB);       //   Rotary encoder library pinout
 
-// Variáveis de tempo EEPROM ------------------------------------
-int inicialTime = 0;     // Tempo inicial
-int currentTime = 0;     // Tempo atual
-// unsigned int verify = 0; // Verificação de estado
-int serverRequest = 0;
-int blindPosition = 0;
-
+/**
+ * Reads encoder values and updates blindPosition variable
+ */
 void encoderUpdate() {
-  static int pos = 0;
+  static int pos = 0;                            ///< Auxiliar value, indicates rotation direction
   encoder.tick();
   int newPos = encoder.getPosition();
 
@@ -48,49 +68,75 @@ void encoderUpdate() {
   }
 }
 
-// Funções individuais - Desce - Sobe - Para --------------------------------
+/**
+ * Turn the motor on, so the blinds go down.
+ * 
+ * @param i   Motor identification number.
+ */ 
 void blindDown(unsigned int i) {
-  Serial.println("Motor - abaixar");
+  Serial.println("Motor - Go Down");
   digitalWrite(motorA, HIGH);
   digitalWrite(motorB, LOW);
 }
 
+/**
+ * Turn the motor on, so the blinds go up.
+ * 
+ * @param i   Motor identification number.
+ */ 
 void blindUp(unsigned int i) {
-  Serial.println("Motor - subir");
+  Serial.println("Motor - Go Up");
   digitalWrite(motorA, LOW);
   digitalWrite(motorB, HIGH);
 }
 
+/**
+ * Turn the motor off.
+ * 
+ * @param i   Motor identification number.
+ */ 
 void blindStop(unsigned int i) {
-  Serial.println("Motor - parar");
+  Serial.println("Motor - Stop");
   digitalWrite(motorA, LOW);
   digitalWrite(motorB, LOW);
 }
 
-// Controle sobre o acionamento do motor ------------------------------------
+/**
+ * Control when the motor should turn on and off, and so it's direction.
+ * 
+ * @param blindID   Blind identification number.
+ * @param request   Request for new position.
+ */
 void blindControl(unsigned int blindID, int request) {
-  encoderUpdate();
+  encoderUpdate();                               //   blindPosition update
   Serial.print(blindPosition);
   Serial.print("  ->  ");
   Serial.println(request);
-  if (request == blindPosition){
+  if (request == blindPosition){                 //   blindPosition achieved request
     blindStop(blindID);
     
+    // Save last stable position value
     if (blindPosition != EEPROM.read(blindID)) {
       Serial.print(blindPosition);
       Serial.println(" Atualizado");
       EEPROM.write(blindID, blindPosition);
       EEPROM.commit();
   }
-  } else if (request > blindPosition) {
+  } else if (request > blindPosition) {          //   blindPosition is lower than request
     blindUp(blindID);
-  } else if (request < blindPosition) {
+
+  } else if (request < blindPosition) {          //   blindPosition is higher than request
     blindDown(blindID);
   }
 }
 
+/**
+ * At starting, define absolute zero value for blindPosition
+ * 
+ * @param i   Blind identification number
+ */
 void reedSwitch(unsigned int i) {
-  Serial.println("Aguardando Reed Switch...");
+  Serial.println("Waiting for Reed Switch...");
   while(digitalRead(RSpin) != HIGH){
     Serial.println(digitalRead(RSpin));
     blindUp(i);
@@ -98,11 +144,13 @@ void reedSwitch(unsigned int i) {
   }
   blindStop(i);
   blindPosition = 0;
-  Serial.print("Reed Switch confirmado  ");
+  Serial.print("Reed Switch comfirmed  ");
   Serial.println(blindPosition);
 }
 
-// SETUP --------------------------------------------------------------------
+/**
+ * Default setup function - pinMode definition and begining.
+ */
 void setup() {
   // Pin mode definition
   pinMode(motorA, OUTPUT);
@@ -113,17 +161,21 @@ void setup() {
   Serial.begin(115200);
 
   // EEPROM begin and read
-  EEPROM.begin(savesNumber);
+  EEPROM.begin(blindsNumber);
   serverRequest = EEPROM.read(0);
   Serial.println(serverRequest);
 
-  reedSwitch(blindNumber);
+  // Reed Switch starting
+  reedSwitch(blindsNumber);
 }
 
-// LOOP ---------------------------------------------------------------------
+/**
+ * Default loop funtion.
+ */
 void loop() {
   blindControl(0, serverRequest);
 
+  // Test ambient for simulating requests
   if(digitalRead(encButton) == LOW){
     verify = !verify;
     serverRequest = valTest[verify];
