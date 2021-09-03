@@ -28,26 +28,26 @@
 #include <EEPROM.h>
 
 // Defines -----------------------------------------------------
-#define blindsNumber 1                           ///< Number of blinds conected
+#define blindsNumber 1                                               ///< Number of blinds conected
 
 // Pinout constants --------------------------------------------
-const unsigned int encoderA[blindsNumber] = {32};///< Encoder input port A pin
-const unsigned int encoderB[blindsNumber] = {33};///< Encoder input port B pin
-const unsigned int motorA[blindsNumber] = {18};  ///< Motor controler write port A pin
-const unsigned int motorB[blindsNumber] = {19};  ///< Motor controler write port B pin
-const unsigned int RSpin[blindsNumber] = {4};    ///< Reed Switch input pin
+const unsigned int encoderA[blindsNumber] = {32};                    ///< Encoder input port A pin
+const unsigned int encoderB[blindsNumber] = {33};                    ///< Encoder input port B pin
+const unsigned int motorA[blindsNumber] = {18};                      ///< Motor controler write port A pin
+const unsigned int motorB[blindsNumber] = {19};                      ///< Motor controler write port B pin
+const unsigned int RSpin[blindsNumber] = {4};                        ///< Reed Switch input pin
 
-const unsigned int encButton = 2;                ///< Encoder button pin (testing)
+const unsigned int encButton = 2;                                    ///< Encoder button pin (testing)
 
 // Variables ---------------------------------------------------
-int serverRequest[blindsNumber] = {0};           ///< Position request from server - WIP
-int blindPosition[blindsNumber] = {0};           ///< Current position of the blinds
+int serverRequest[blindsNumber] = {0};                               ///< Position request from server - WIP
+int blindPosition[blindsNumber] = {0};                               ///< Current position of the blinds
 
-int valTest[2] = {0, 100};                       ///< Fake request values (testing)
-unsigned int verify = 0;                         ///< Status verification (testing)
+int valTest[2] = {0, 100};                                           ///< Fake request values (testing)
+unsigned int verify = 0;                                             ///< Status verification (testing)
 
 // Encoder pinout ----------------------------------------------
-RotaryEncoder encoder(encoderA[0], encoderB[0]);       //   Rotary encoder library pinout
+RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary encoder library pinout
 
 /**
  * Reads encoder values and updates blindPosition variable
@@ -56,11 +56,11 @@ RotaryEncoder encoder(encoderA[0], encoderB[0]);       //   Rotary encoder libra
  */
 void encoderUpdate(unsigned int i) {
   static int pos = 0;  
-  int newPos = 0;                          ///< Auxiliar value for geting rotation direction
+  int newPos = 0;                                                    ///< Auxiliar value for geting rotation direction
   switch (i){
     case 1:
       encoder.tick();
-      newPos = encoder.getPosition();        ///< Auxiliar value for reading position
+      newPos = encoder.getPosition();                                ///< Auxiliar value for reading position
       break;
   }
 
@@ -120,11 +120,11 @@ void blindStop(unsigned int i) {
  * @param blindID   Blind identification number.
  */
 void blindControl(unsigned int blindID) {
-  encoderUpdate(blindID);                        //   blindPosition update
+  encoderUpdate(blindID);                                            //   blindPosition update
   Serial.print(blindPosition[blindID-1]);
   Serial.print("  ->  ");
   Serial.println(serverRequest[blindID-1]);
-  if (serverRequest[blindID-1] == blindPosition[blindID-1]){//   blindPosition achieved request
+  if (serverRequest[blindID-1] == blindPosition[blindID-1]){         //   blindPosition achieved request
     blindStop(blindID);
     
     // Save last stable position value
@@ -134,10 +134,10 @@ void blindControl(unsigned int blindID) {
       EEPROM.write(blindID-1, blindPosition[blindID-1]);
       EEPROM.commit();
   }
-  } else if (serverRequest[blindID-1] > blindPosition[blindID-1]) {//   blindPosition is lower than request
+  } else if (serverRequest[blindID-1] > blindPosition[blindID-1]) {  //   blindPosition is lower than request
     blindUp(blindID);
 
-  } else if (serverRequest[blindID-1] < blindPosition[blindID-1]) {//   blindPosition is higher than request
+  } else if (serverRequest[blindID-1] < blindPosition[blindID-1]) {  //   blindPosition is higher than request
     blindDown(blindID);
   }
 }
