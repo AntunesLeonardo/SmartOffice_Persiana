@@ -29,21 +29,26 @@
 
 // Defines -----------------------------------------------------
 #define blindsNumber 1                                               ///< Number of blinds conected
+#define rotationTime 0.278                                           ///< Time for rotating 60º at 100 rpm
 
 // Pinout constants --------------------------------------------
+const unsigned int RSpin[blindsNumber] = {25};                       ///< Reed Switch input pin
 const unsigned int encoderA[blindsNumber] = {32};                    ///< Encoder input port A pin
 const unsigned int encoderB[blindsNumber] = {33};                    ///< Encoder input port B pin
-const unsigned int motorA[blindsNumber] = {18};                      ///< Motor controler write port A pin
-const unsigned int motorB[blindsNumber] = {19};                      ///< Motor controler write port B pin
-const unsigned int RSpin[blindsNumber] = {4};                        ///< Reed Switch input pin
+const unsigned int vertMotorA[blindsNumber] = {34};                  ///< Vertical motor controler port A pin
+const unsigned int vertMotorB[blindsNumber] = {35};                  ///< Vertical motor controler port B pin
+const unsigned int rotMotorA[blindsNumber] = {36};                   ///< Rotation motor controler port A pin
+const unsigned int rotMotorB[blindsNumber] = {39};                   ///< Rotation motor controler port B pin
 
 const unsigned int encButton = 2;                                    ///< Encoder button pin (testing)
 
 // Variables ---------------------------------------------------
-int serverRequest[blindsNumber] = {0};                               ///< Position request from server - WIP
+int serverVertRequest[blindsNumber] = {0};                           ///< Vertical position request from server - WIP
+int serverRotRequest[blindsNumber] = {0};                            ///< Blades rotation request from server - WIP
 int blindPosition[blindsNumber] = {0};                               ///< Current position of the blinds
+int bladePosition[blindsNumber] = {0};                               ///< Corrent position of the blades
 
-int valTest[2] = {0, 100};                                           ///< Fake request values (testing)
+int valTest[2] = {0, 50};                                            ///< Fake request values (testing)
 unsigned int verify = 0;                                             ///< Status verification (testing)
 
 // Encoder pinout ----------------------------------------------
@@ -84,8 +89,8 @@ void blindDown(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Go Down");
-  digitalWrite(motorA[i-1], HIGH);
-  digitalWrite(motorB[i-1], LOW);
+  digitalWrite(vertMotorA[i-1], HIGH);
+  digitalWrite(vertMotorB[i-1], LOW);
 }
 
 /**
@@ -97,8 +102,8 @@ void blindUp(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Go Up");
-  digitalWrite(motorA[i-1], LOW);
-  digitalWrite(motorB[i-1], HIGH);
+  digitalWrite(vertMotorA[i-1], LOW);
+  digitalWrite(vertMotorB[i-1], HIGH);
 }
 
 /**
@@ -110,8 +115,46 @@ void blindStop(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Stop");
-  digitalWrite(motorA[i-1], LOW);
-  digitalWrite(motorB[i-1], LOW);
+  digitalWrite(vertMotorA[i-1], LOW);
+  digitalWrite(vertMotorB[i-1], LOW);
+}
+
+/**
+ * Rotates blades to open position
+ * 
+ * @param i Motor identification number
+ */
+void rotateOpen(unsigned int i) {
+  if (bladePosition[i-1] != 0) {
+    Serial.print("Motor ");
+    Serial.print(i);
+    Serial.println(" - Open");
+    digitalWrite(rotMotorA[i-1], LOW);
+    digitalWrite(rotMotorA[i-1], HIGH);
+    delay(rotationTime);
+    digitalWrite(rotMotorA[i-1], LOW);
+    digitalWrite(rotMotorA[i-1], LOW);
+    bladePosition[i-1] = 0;
+  }
+}
+
+/**
+ * Rotate blades to closed position
+ * 
+ * @param i Motor identification number
+ */
+void rotateClose(unsigned int i) {
+  if (bladePosition[i-1] == 0) {
+    Serial.print("Motor ");
+    Serial.print(i);
+    Serial.println(" - Close");
+    digitalWrite(rotMotorA[i-1], HIGH);
+    digitalWrite(rotMotorA[i-1], LOW);
+    delay(rotationTime);
+    digitalWrite(rotMotorA[i-1], LOW);
+    digitalWrite(rotMotorA[i-1], LOW);
+    bladePosition[i-1] = 1;
+  }
 }
 
 /**
@@ -123,22 +166,35 @@ void blindControl(unsigned int blindID) {
   encoderUpdate(blindID);                                            //   blindPosition update
   Serial.print(blindPosition[blindID-1]);
   Serial.print("  ->  ");
-  Serial.println(serverRequest[blindID-1]);
-  if (serverRequest[blindID-1] == blindPosition[blindID-1]){         //   blindPosition achieved request
+  Serial.println(serverVertRequest[blindID-1]);
+  if (serverVertRequest[blindID-1] == blindPosition[blindID-1]){     //   blindPosition achieved request
     blindStop(blindID);
     
     // Save last stable position value
     if (blindPosition[blindID-1] != EEPROM.read(blindID-1)) {
       Serial.print(blindPosition[blindID-1]);
-      Serial.println(" Atualizado");
+      Serial.println(" Position Updated");
       EEPROM.write(blindID-1, blindPosition[blindID-1]);
       EEPROM.commit();
   }
-  } else if (serverRequest[blindID-1] > blindPosition[blindID-1]) {  //   blindPosition is lower than request
+  } else if (serverVertRequest[blindID-1] > blindPosition[blindID-1]) {  //   blindPosition is lower than request
     blindUp(blindID);
 
-  } else if (serverRequest[blindID-1] < blindPosition[blindID-1]) {  //   blindPosition is higher than request
+  } else if (serverVertRequest[blindID-1] < blindPosition[blindID-1]) {  //   blindPosition is higher than request
     blindDown(blindID);
+  }
+
+  if (serverRotRequest[blindID-1] == 0) {                          // opens blades when requested
+    rotateOpen(blindID);
+  } else if (serverRotRequest[blindID-1] == 1) {                   // closes blades when requested
+    rotateClose(blindID);
+  }
+
+  if (bladePosition[blindID-1] != EEPROM.read(blindsNumber + blindID-1)) {
+    Serial.print(bladePosition[blindID-1]);
+    Serial.println(" Blade position Updated");
+    EEPROM.write(blindsNumber + blindID-1, bladePosition[blindID-1]);
+    EEPROM.commit();
   }
 }
 
@@ -166,19 +222,27 @@ void reedSwitch(unsigned int i) {
 void setup() {
   // Serial and EEPROM begin
   Serial.begin(115200);
-  EEPROM.begin(blindsNumber);
+  EEPROM.begin(2*blindsNumber);
 
   for(int i=0; i<blindsNumber; i++){
     // Pin mode definition
-    pinMode(motorA[i], OUTPUT);
-    pinMode(motorB[i], OUTPUT);
+    pinMode(vertMotorA[i], OUTPUT);
+    pinMode(vertMotorB[i], OUTPUT);
+    pinMode(rotMotorA[i], OUTPUT);
+    pinMode(rotMotorB[i], OUTPUT);
 
     // EEPROM read
-    serverRequest[i] = EEPROM.read(i);
-    Serial.print("Last request at ");
+    serverVertRequest[i] = EEPROM.read(i);
+    Serial.print("Last vertical position - blind ");
     Serial.print(i+1);
     Serial.print(": ");
-    Serial.println(serverRequest[i]);
+    Serial.println(serverVertRequest[i]);
+
+    serverRotRequest[i] = EEPROM.read(blindsNumber + i);
+    Serial.print("Last rotational position - blind ");
+    Serial.print(i+1);
+    Serial.print(": ");
+    Serial.println(serverRotRequest[i]);
 
     // Reed Switch starting
     reedSwitch(i+1);
@@ -197,7 +261,7 @@ void loop() {
   // Test ambient for simulating requests
   if(digitalRead(encButton) == LOW){
     verify = !verify;
-    serverRequest[0] = valTest[verify];
+    serverVertRequest[0] = valTest[verify];
   }
   delay(1);
 }
