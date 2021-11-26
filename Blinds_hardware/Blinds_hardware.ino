@@ -54,6 +54,17 @@ unsigned int verify = 0;                                             ///< Status
 // Encoder pinout ----------------------------------------------
 RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary encoder library pinout
 
+// Internet - MQTT----------------------------------------------
+const int mqttPort = 1883;
+//const char* mqttServer = "mqtt.eclipseprojects.io";
+//const char* mqttUser = "meuteste";
+//const char* mqttPassword = "123456";
+const char* ssid = "SmartPTI";
+const char* password = "SmartPT12017.";
+
+WiFiClient wifiClient;
+PubSubClient client(wifiClient);
+
 // -------------------------------------------------------------
 
 /**
@@ -126,6 +137,12 @@ void setup() {
   Serial.begin(115200);
   EEPROM.begin(2*blindsNumber);
 
+  setup_wifi();
+  client.setServer(mqttServer, mqttPort);
+  client.setCallback(callback);
+  client.subscribe(TOPICO);
+  reconnect();
+
   for(int i=0; i<blindsNumber; i++){
     // Pin mode definition
     pinMode(vertMotorA[i], OUTPUT);
@@ -158,6 +175,8 @@ void setup() {
  * Default loop funtion.
  */
 void loop() {
+  client.loop();
+  
   for(int i=0; i<blindsNumber; i++){
     blindControl(i);
   }
