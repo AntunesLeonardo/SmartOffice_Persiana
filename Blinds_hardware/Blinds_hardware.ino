@@ -70,9 +70,9 @@ void blindControl(unsigned int blindID) {
   if (serverVertRequest[blindID] == blindPosition[blindID]){         //   blindPosition achieved request
     blindStop(blindID);
 
-    if (serverRotRequest[blindID] == 0) {                          // opens blades when requested
+    if (serverRotRequest[blindID] == 0) {                            // opens blades when requested
       rotateOpen(blindID);
-    } else if (serverRotRequest[blindID] == 1) {                   // closes blades when requested
+    } else if (serverRotRequest[blindID] == 1) {                     // closes blades when requested
       rotateClose(blindID);
     }
     
@@ -89,10 +89,10 @@ void blindControl(unsigned int blindID) {
   } else {
     rotateOpen(blindID);
     
-    if (serverVertRequest[blindID] > blindPosition[blindID]) {         //   blindPosition is lower than request
+    if (serverVertRequest[blindID] > blindPosition[blindID]) {       //   blindPosition is lower than request
       blindUp(blindID);
 
-    } else if (serverVertRequest[blindID] < blindPosition[blindID]) {  //   blindPosition is higher than request
+    } else if (serverVertRequest[blindID] < blindPosition[blindID]) {//   blindPosition is higher than request
       blindDown(blindID);
     }
   }
