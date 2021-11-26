@@ -17,8 +17,8 @@ void blindDown(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Go Down");
-  digitalWrite(vertMotorA[i-1], HIGH);
-  digitalWrite(vertMotorB[i-1], LOW);
+  digitalWrite(vertMotorA[i], HIGH);
+  digitalWrite(vertMotorB[i], LOW);
 }
 
 /**
@@ -30,8 +30,8 @@ void blindUp(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Go Up");
-  digitalWrite(vertMotorA[i-1], LOW);
-  digitalWrite(vertMotorB[i-1], HIGH);
+  digitalWrite(vertMotorA[i], LOW);
+  digitalWrite(vertMotorB[i], HIGH);
 }
 
 /**
@@ -43,6 +43,6 @@ void blindStop(unsigned int i) {
   Serial.print("Motor ");
   Serial.print(i);
   Serial.println(" - Stop");
-  digitalWrite(vertMotorA[i-1], LOW);
-  digitalWrite(vertMotorB[i-1], LOW);
+  digitalWrite(vertMotorA[i], LOW);
+  digitalWrite(vertMotorB[i], LOW);
 }

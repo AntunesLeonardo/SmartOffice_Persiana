@@ -63,37 +63,38 @@ RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary
  */
 void blindControl(unsigned int blindID) {
   encoderUpdate(blindID);                                            //   blindPosition update
-  Serial.print(blindPosition[blindID-1]);
+  Serial.print(blindPosition[blindID]);
   Serial.print("  ->  ");
-  Serial.println(serverVertRequest[blindID-1]);
-  if (serverVertRequest[blindID-1] == blindPosition[blindID-1]){     //   blindPosition achieved request
+  Serial.println(serverVertRequest[blindID]);
+  
+  if (serverVertRequest[blindID] == blindPosition[blindID]){         //   blindPosition achieved request
     blindStop(blindID);
+
+    if (serverRotRequest[blindID] == 0) {                          // opens blades when requested
+      rotateOpen(blindID);
+    } else if (serverRotRequest[blindID] == 1) {                   // closes blades when requested
+      rotateClose(blindID);
+    }
     
     // Save last stable position value
-    if (blindPosition[blindID-1] != EEPROM.read(blindID-1)) {
-      Serial.print(blindPosition[blindID-1]);
+    if ((blindPosition[blindID] != EEPROM.read(blindID)) || (bladePosition[blindID] != EEPROM.read(blindsNumber + blindID))) {
+      Serial.print(blindPosition[blindID]);
       Serial.println(" Position Updated");
-      EEPROM.write(blindID-1, blindPosition[blindID-1]);
+      EEPROM.write(blindID, blindPosition[blindID]);
+      Serial.print(bladePosition[blindID]);
+      Serial.println(" Blade position Updated");
+      EEPROM.write(blindsNumber + blindID, bladePosition[blindID]);
       EEPROM.commit();
-  }
-  } else if (serverVertRequest[blindID-1] > blindPosition[blindID-1]) {  //   blindPosition is lower than request
-    blindUp(blindID);
-
-  } else if (serverVertRequest[blindID-1] < blindPosition[blindID-1]) {  //   blindPosition is higher than request
-    blindDown(blindID);
-  }
-
-  if (serverRotRequest[blindID-1] == 0) {                          // opens blades when requested
+    }
+  } else {
     rotateOpen(blindID);
-  } else if (serverRotRequest[blindID-1] == 1) {                   // closes blades when requested
-    rotateClose(blindID);
-  }
+    
+    if (serverVertRequest[blindID] > blindPosition[blindID]) {         //   blindPosition is lower than request
+      blindUp(blindID);
 
-  if (bladePosition[blindID-1] != EEPROM.read(blindsNumber + blindID-1)) {
-    Serial.print(bladePosition[blindID-1]);
-    Serial.println(" Blade position Updated");
-    EEPROM.write(blindsNumber + blindID-1, bladePosition[blindID-1]);
-    EEPROM.commit();
+    } else if (serverVertRequest[blindID] < blindPosition[blindID]) {  //   blindPosition is higher than request
+      blindDown(blindID);
+    }
   }
 }
 
@@ -104,15 +105,15 @@ void blindControl(unsigned int blindID) {
  */
 void reedSwitch(unsigned int i) {
   Serial.println("Waiting for Reed Switch...");
-  while(digitalRead(RSpin[i-1]) != HIGH){
-    Serial.println(digitalRead(RSpin[i-1]));
+  while(digitalRead(RSpin[i]) != HIGH){
+    Serial.println(digitalRead(RSpin[i]));
     blindUp(i);
     delay(1);
   }
   blindStop(i);
-  blindPosition[i-1] = 0;
+  blindPosition[i] = 0;
   Serial.print("Reed Switch comfirmed  ");
-  Serial.println(blindPosition[i-1]);
+  Serial.println(blindPosition[i]);
 }
 
 // -------------------------------------------------------------
@@ -135,18 +136,18 @@ void setup() {
     // EEPROM read
     serverVertRequest[i] = EEPROM.read(i);
     Serial.print("Last vertical position - blind ");
-    Serial.print(i+1);
+    Serial.print(i);
     Serial.print(": ");
     Serial.println(serverVertRequest[i]);
 
     serverRotRequest[i] = EEPROM.read(blindsNumber + i);
     Serial.print("Last rotational position - blind ");
-    Serial.print(i+1);
+    Serial.print(i);
     Serial.print(": ");
     Serial.println(serverRotRequest[i]);
 
     // Reed Switch starting
-    reedSwitch(i+1);
+    reedSwitch(i);
   }
   pinMode(encButton, INPUT);
 }
@@ -157,7 +158,7 @@ void setup() {
  * Default loop funtion.
  */
 void loop() {
-  for(int i=1; i<=blindsNumber; i++){
+  for(int i=0; i<blindsNumber; i++){
     blindControl(i);
   }
   

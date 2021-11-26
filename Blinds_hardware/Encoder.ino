@@ -16,7 +16,7 @@ void encoderUpdate(unsigned int i) {
   static int pos = 0;  
   int newPos = 0;                                                    ///< Auxiliar value for geting rotation direction
   switch (i){
-    case 1:
+    case 0:
       encoder.tick();
       newPos = encoder.getPosition();                                ///< Auxiliar value for reading position
       break;
@@ -24,11 +24,11 @@ void encoderUpdate(unsigned int i) {
 
   if (pos < newPos) {
     pos = newPos;
-    blindPosition[i-1]--;
-    Serial.println(blindPosition[i-1]);
+    blindPosition[i]--;
+    Serial.println(blindPosition[i]);
   } else if (pos > newPos) {
     pos = newPos;
-    blindPosition[i-1]++;
-    Serial.println(blindPosition[i-1]);
+    blindPosition[i]++;
+    Serial.println(blindPosition[i]);
   }
 }

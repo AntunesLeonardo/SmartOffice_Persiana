@@ -13,16 +13,16 @@
  * @param i Motor identification number
  */
 void rotateOpen(unsigned int i) {
-  if (bladePosition[i-1] != 0) {
+  if (bladePosition[i] != 0) {
     Serial.print("Motor ");
     Serial.print(i);
     Serial.println(" - Open");
-    digitalWrite(rotMotorA[i-1], LOW);
-    digitalWrite(rotMotorA[i-1], HIGH);
+    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorA[i], HIGH);
     delay(rotationTime);
-    digitalWrite(rotMotorA[i-1], LOW);
-    digitalWrite(rotMotorA[i-1], LOW);
-    bladePosition[i-1] = 0;
+    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorA[i], LOW);
+    bladePosition[i] = 0;
   }
 }
 
@@ -32,15 +32,15 @@ void rotateOpen(unsigned int i) {
  * @param i Motor identification number
  */
 void rotateClose(unsigned int i) {
-  if (bladePosition[i-1] == 0) {
+  if (bladePosition[i] == 0) {
     Serial.print("Motor ");
     Serial.print(i);
     Serial.println(" - Close");
-    digitalWrite(rotMotorA[i-1], HIGH);
-    digitalWrite(rotMotorA[i-1], LOW);
+    digitalWrite(rotMotorA[i], HIGH);
+    digitalWrite(rotMotorA[i], LOW);
     delay(rotationTime);
-    digitalWrite(rotMotorA[i-1], LOW);
-    digitalWrite(rotMotorA[i-1], LOW);
-    bladePosition[i-1] = 1;
+    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorA[i], LOW);
+    bladePosition[i] = 1;
   }
 }
