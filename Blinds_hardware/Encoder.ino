@@ -19,6 +19,7 @@ void encoderUpdate(unsigned int i) {
     case 0:
       encoder.tick();
       newPos = encoder.getPosition();                                ///< Auxiliar value for reading position
+      Serial.println("encoder 0");
       break;
   }
 

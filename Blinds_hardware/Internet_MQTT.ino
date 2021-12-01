@@ -30,19 +30,21 @@
 
 void reconnect() {
   while (WiFi.status() != WL_CONNECTED) {
-    showWhiteWarningStatus();
-    delay(500);
+    Serial.print(".");
+    //showWhiteWarningStatus();
+    delay(100);
   }
   while (!client.connected()) {
     //showWhiteWarningStatus();
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     if (client.connect(clientId.c_str(), mqttUser, mqttPassword)) {
-      client.publish(TOPICO, "Reconectado");
+      client.publish(topic, "Reconectado");
+      Serial.println("Publish");
     } else {
       int estado = client.state();
-      String t = horario_atual() + String("Falhou, estado do cliente = " + estado);
-      publishSerialData(TOPICO,(char*)t.c_str());
+      //String t = horario_atual() + String("Falhou, estado do cliente = " + estado);
+      Serial.println("Not Conected");
       delay(5000);
     }
   }

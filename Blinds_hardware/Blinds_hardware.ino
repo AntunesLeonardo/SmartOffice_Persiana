@@ -24,7 +24,9 @@
  */
  
 // Libraries ---------------------------------------------------
+#include <WiFi.h>
 #include <RotaryEncoder.h>
+#include <PubSubClient.h>
 #include <EEPROM.h>
 
 // Defines -----------------------------------------------------
@@ -32,13 +34,13 @@
 #define rotationTime 0.278                                           ///< Time for rotating 60º at 100 rpm
 
 // Pinout constants --------------------------------------------
-const unsigned int RSpin[blindsNumber] = {25};                       ///< Reed Switch input pin
-const unsigned int encoderA[blindsNumber] = {32};                    ///< Encoder input port A pin
-const unsigned int encoderB[blindsNumber] = {33};                    ///< Encoder input port B pin
-const unsigned int vertMotorA[blindsNumber] = {34};                  ///< Vertical motor controler port A pin
-const unsigned int vertMotorB[blindsNumber] = {35};                  ///< Vertical motor controler port B pin
-const unsigned int rotMotorA[blindsNumber] = {36};                   ///< Rotation motor controler port A pin
-const unsigned int rotMotorB[blindsNumber] = {39};                   ///< Rotation motor controler port B pin
+const unsigned int RSpin[blindsNumber] = {17};                       ///< Reed Switch input pin
+const unsigned int encoderA[blindsNumber] = {5};                    ///< Encoder input port A pin
+const unsigned int encoderB[blindsNumber] = {18};                    ///< Encoder input port B pin
+const unsigned int vertMotorA[blindsNumber] = {19};                  ///< Vertical motor controler port A pin
+const unsigned int vertMotorB[blindsNumber] = {21};                  ///< Vertical motor controler port B pin
+const unsigned int rotMotorA[blindsNumber] = {22};                   ///< Rotation motor controler port A pin
+const unsigned int rotMotorB[blindsNumber] = {23};                   ///< Rotation motor controler port B pin
 
 const unsigned int encButton = 2;                                    ///< Encoder button pin (testing)
 
@@ -56,11 +58,12 @@ RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary
 
 // Internet - MQTT----------------------------------------------
 const int mqttPort = 1883;
-//const char* mqttServer = "mqtt.eclipseprojects.io";
-//const char* mqttUser = "meuteste";
-//const char* mqttPassword = "123456";
+const char* mqttServer = "179.106.217.205";
+const char* mqttUser = "guest";
+const char* mqttPassword = "guest";
 const char* ssid = "SmartPTI";
 const char* password = "SmartPT12017.";
+const char* topic = "/shutter";
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -73,6 +76,8 @@ PubSubClient client(wifiClient);
  * @param blindID   Blind identification number.
  */
 void blindControl(unsigned int blindID) {
+  Serial.print("blindControl i");
+  Serial.println(blindID);
   encoderUpdate(blindID);                                            //   blindPosition update
   Serial.print(blindPosition[blindID]);
   Serial.print("  ->  ");
@@ -115,11 +120,13 @@ void blindControl(unsigned int blindID) {
  * @param i   Blind identification number
  */
 void reedSwitch(unsigned int i) {
+  Serial.print("reedSwitch i");
+  Serial.println(i);
   Serial.println("Waiting for Reed Switch...");
   while(digitalRead(RSpin[i]) != HIGH){
     Serial.println(digitalRead(RSpin[i]));
     blindUp(i);
-    delay(1);
+    delay(1000);
   }
   blindStop(i);
   blindPosition[i] = 0;
@@ -140,10 +147,13 @@ void setup() {
   setup_wifi();
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
-  client.subscribe(TOPICO);
+  client.subscribe(topic);
   reconnect();
 
   for(int i=0; i<blindsNumber; i++){
+    Serial.print("Setup For i");
+    Serial.println(i);
+    
     // Pin mode definition
     pinMode(vertMotorA[i], OUTPUT);
     pinMode(vertMotorB[i], OUTPUT);
@@ -178,13 +188,15 @@ void loop() {
   client.loop();
   
   for(int i=0; i<blindsNumber; i++){
+    Serial.print("Loop For i");
+    Serial.println(i);
     blindControl(i);
   }
   
-  // Test ambient for simulating requests
-  if(digitalRead(encButton) == LOW){
-    verify = !verify;
-    serverVertRequest[0] = valTest[verify];
-  }
-  delay(100);
+// Test ambient for simulating requests
+//  if(digitalRead(encButton) == LOW){
+//    verify = !verify;
+//    serverVertRequest[0] = valTest[verify];
+//  }
+  delay(1);
 }
