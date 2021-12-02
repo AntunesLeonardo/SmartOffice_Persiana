@@ -22,17 +22,21 @@
  * - Created by Leonardo A Antunes
  * - https://github.com/AntunesLeonardo
  */
- 
+
 // Libraries ---------------------------------------------------
 #include <WiFi.h>
 #include <RotaryEncoder.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include <EEPROM.h>
 
 // Defines -----------------------------------------------------
 #define blindsNumber 1                                               ///< Number of blinds conected
-#define rotationTime 0.278                                           ///< Time for rotating 60º at 100 rpm
+#define rotationTime 1000                                           ///< Time for rotating 60º at 100 rpm
 
+// Blinds ID ---------------------------------------------------
+const char* blindID_0 = "001";
+ 
 // Pinout constants --------------------------------------------
 const unsigned int RSpin[blindsNumber] = {17};                       ///< Reed Switch input pin
 const unsigned int encoderA[blindsNumber] = {5};                    ///< Encoder input port A pin
@@ -41,8 +45,8 @@ const unsigned int vertMotorA[blindsNumber] = {19};                  ///< Vertic
 const unsigned int vertMotorB[blindsNumber] = {21};                  ///< Vertical motor controler port B pin
 const unsigned int rotMotorA[blindsNumber] = {22};                   ///< Rotation motor controler port A pin
 const unsigned int rotMotorB[blindsNumber] = {23};                   ///< Rotation motor controler port B pin
+const unsigned int LedAlert = 2;
 
-const unsigned int encButton = 2;                                    ///< Encoder button pin (testing)
 
 // Variables ---------------------------------------------------
 int serverVertRequest[blindsNumber] = {0};                           ///< Vertical position request from server - WIP
@@ -50,20 +54,17 @@ int serverRotRequest[blindsNumber] = {0};                            ///< Blades
 int blindPosition[blindsNumber] = {0};                               ///< Current position of the blinds
 int bladePosition[blindsNumber] = {0};                               ///< Corrent position of the blades
 
-int valTest[2] = {0, 50};                                            ///< Fake request values (testing)
-unsigned int verify = 0;                                             ///< Status verification (testing)
-
 // Encoder pinout ----------------------------------------------
 RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary encoder library pinout
 
 // Internet - MQTT----------------------------------------------
-const int mqttPort = 1883;
-const char* mqttServer = "179.106.217.205";
-const char* mqttUser = "guest";
-const char* mqttPassword = "guest";
-const char* ssid = "SmartPTI";
-const char* password = "SmartPT12017.";
-const char* topic = "/shutter";
+const int mqttPort = 1883;                                           ///< MQTT standard port
+const char* mqttServer = "179.106.217.205";                          ///< MQTT host
+const char* mqttUser = "guest";                                      ///< MQTT User
+const char* mqttPassword = "guest";                                  ///< MQTT Password
+const char* topic = "/shutter";                                      ///< MQTT Topic
+const char* ssid = "SmartPTI";                                       ///< Wifi ssid
+const char* password = "SmartPT12017.";                              ///< Wifi password
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -76,8 +77,6 @@ PubSubClient client(wifiClient);
  * @param blindID   Blind identification number.
  */
 void blindControl(unsigned int blindID) {
-  Serial.print("blindControl i");
-  Serial.println(blindID);
   encoderUpdate(blindID);                                            //   blindPosition update
   Serial.print(blindPosition[blindID]);
   Serial.print("  ->  ");
@@ -105,10 +104,10 @@ void blindControl(unsigned int blindID) {
   } else {
     rotateOpen(blindID);
     
-    if (serverVertRequest[blindID] > blindPosition[blindID]) {       //   blindPosition is lower than request
+    if (serverVertRequest[blindID] < blindPosition[blindID]) {       //   blindPosition is lower than request
       blindUp(blindID);
 
-    } else if (serverVertRequest[blindID] < blindPosition[blindID]) {//   blindPosition is higher than request
+    } else if (serverVertRequest[blindID] > blindPosition[blindID]) {//   blindPosition is higher than request
       blindDown(blindID);
     }
   }
@@ -147,8 +146,8 @@ void setup() {
   setup_wifi();
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
-  client.subscribe(topic);
   reconnect();
+  client.subscribe(topic);
 
   for(int i=0; i<blindsNumber; i++){
     Serial.print("Setup For i");
@@ -176,7 +175,7 @@ void setup() {
     // Reed Switch starting
     reedSwitch(i);
   }
-  pinMode(encButton, INPUT);
+  pinMode(LedAlert, OUTPUT);
 }
 
 // -------------------------------------------------------------
@@ -186,17 +185,11 @@ void setup() {
  */
 void loop() {
   client.loop();
-  
   for(int i=0; i<blindsNumber; i++){
-    Serial.print("Loop For i");
-    Serial.println(i);
-    blindControl(i);
+    while((serverVertRequest[i] != blindPosition[i])||(serverRotRequest[i] != bladePosition[i])){
+      blindControl(i);
+      delay(1);
+    }
   }
-  
-// Test ambient for simulating requests
-//  if(digitalRead(encButton) == LOW){
-//    verify = !verify;
-//    serverVertRequest[0] = valTest[verify];
-//  }
-  delay(1);
+  delay(10);
 }

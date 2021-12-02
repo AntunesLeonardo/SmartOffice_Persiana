@@ -32,7 +32,10 @@ void reconnect() {
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     //showWhiteWarningStatus();
-    delay(100);
+    digitalWrite(LedAlert, HIGH);
+    delay(50);
+    digitalWrite(LedAlert, LOW);
+    delay(50);
   }
   while (!client.connected()) {
     //showWhiteWarningStatus();
@@ -51,6 +54,12 @@ void reconnect() {
   //showOkStatus();
 }
 
-void callback(char* topic, byte *payload, unsigned int len) {
-
+void callback(char* topic, byte* payload, unsigned int length) {
+  StaticJsonDocument <256> doc;
+  deserializeJson(doc,payload);
+  
+  serverVertRequest[0] = doc[blindID_0][0];
+  serverRotRequest[0] = doc[blindID_0][1];
+  Serial.println(serverVertRequest[0]);
+  Serial.println(serverRotRequest[0]);
 }

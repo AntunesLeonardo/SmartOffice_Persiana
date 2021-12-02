@@ -14,9 +14,9 @@
  * @param i   Motor identification number.
  */ 
 void blindDown(unsigned int i) {
-  Serial.print("Motor ");
-  Serial.print(i);
-  Serial.println(" - Go Down");
+  //Serial.print("Motor ");
+  //Serial.print(i);
+  //Serial.println(" - Go Down");
   digitalWrite(vertMotorA[i], HIGH);
   digitalWrite(vertMotorB[i], LOW);
 }
@@ -27,9 +27,9 @@ void blindDown(unsigned int i) {
  * @param i   Motor identification number.
  */ 
 void blindUp(unsigned int i) {
-  Serial.print("Motor ");
-  Serial.print(i);
-  Serial.println(" - Go Up");
+  //Serial.print("Motor ");
+  //Serial.print(i);
+  //Serial.println(" - Go Up");
   digitalWrite(vertMotorA[i], LOW);
   digitalWrite(vertMotorB[i], HIGH);
 }
@@ -40,9 +40,9 @@ void blindUp(unsigned int i) {
  * @param i   Motor identification number.
  */ 
 void blindStop(unsigned int i) {
-  Serial.print("Motor ");
-  Serial.print(i);
-  Serial.println(" - Stop");
+  //Serial.print("Motor ");
+  //Serial.print(i);
+  //Serial.println(" - Stop");
   digitalWrite(vertMotorA[i], LOW);
   digitalWrite(vertMotorB[i], LOW);
 }
