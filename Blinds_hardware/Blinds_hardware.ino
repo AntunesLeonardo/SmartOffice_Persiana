@@ -70,18 +70,15 @@ PubSubClient client(wifiClient);
 
 // -------------------------------------------------------------
 
-static uint8_t taskCoreZero = 0;
-static uint8_t taskCoreOne  = 1;
-
-// -------------------------------------------------------------
-
 /**
  * Control when the motor should turn on and off, and so it's direction.
  * 
  * @param blindID   Blind identification number.
  */
 void blindControl(unsigned int blindID) {
-//  encoderUpdate(blindID);                                            //   blindPosition update
+  Serial.print("blindControl i");
+  Serial.println(blindID);
+  encoderUpdate(blindID);                                            //   blindPosition update
   Serial.print(blindPosition[blindID]);
   Serial.print("  ->  ");
   Serial.println(serverVertRequest[blindID]);
@@ -123,6 +120,8 @@ void blindControl(unsigned int blindID) {
  * @param i   Blind identification number
  */
 void reedSwitch(unsigned int i) {
+  Serial.print("reedSwitch i");
+  Serial.println(i);
   Serial.println("Waiting for Reed Switch...");
   while(digitalRead(RSpin[i]) != HIGH){
     Serial.println(digitalRead(RSpin[i]));
@@ -152,7 +151,9 @@ void setup() {
   reconnect();
 
   for(int i=0; i<blindsNumber; i++){
-
+    Serial.print("Setup For i");
+    Serial.println(i);
+    
     // Pin mode definition
     pinMode(vertMotorA[i], OUTPUT);
     pinMode(vertMotorB[i], OUTPUT);
@@ -176,64 +177,26 @@ void setup() {
     reedSwitch(i);
   }
   pinMode(encButton, INPUT);
-
-//coreTaskTwo: vigiar o botão para detectar quando pressioná-lo
-  xTaskCreatePinnedToCore(
-                    coreTaskZero,   /* função que implementa a tarefa */
-                    "coreTaskZero", /* nome da tarefa */
-                    10000,      /* número de palavras a serem alocadas para uso com a pilha da tarefa */
-                    NULL,       /* parâmetro de entrada para a tarefa (pode ser NULL) */
-                    2,          /* prioridade da tarefa (0 a N) */
-                    NULL,       /* referência para a tarefa (pode ser NULL) */
-                    taskCoreZero);         /* Núcleo que executará a tarefa */
-
-//coreTaskOne: atualizar as informações do display
-  xTaskCreatePinnedToCore(
-                    coreTaskOne,   /* função que implementa a tarefa */
-                    "coreTaskOne", /* nome da tarefa */
-                    10000,      /* número de palavras a serem alocadas para uso com a pilha da tarefa */
-                    NULL,       /* parâmetro de entrada para a tarefa (pode ser NULL) */
-                    2,          /* prioridade da tarefa (0 a N) */
-                    NULL,       /* referência para a tarefa (pode ser NULL) */
-                    taskCoreOne);         /* Núcleo que executará a tarefa */
-}   
+}
 
 // -------------------------------------------------------------
-
-void coreTaskZero( void * pvParameters ){
-  while(true){
-    client.loop();
-  
-    for(int i=0; i<blindsNumber; i++){
-      blindControl(i);
-    }
-    delay(10);
-  }
-}
-
-void coreTaskOne( void * pvParameters ){
-  while(true){
-    for(int i=0; i<blindsNumber; i++){
-      encoderUpdate(i);
-    }
-    delay(1);
-  }
-}
 
 /**
  * Default loop funtion.
  */
 void loop() {
-//  client.loop();
+  client.loop();
   
-//  for(int i=0; i<blindsNumber; i++){
-//    blindControl(i);
-//  }
+  for(int i=0; i<blindsNumber; i++){
+    Serial.print("Loop For i");
+    Serial.println(i);
+    blindControl(i);
+  }
   
 // Test ambient for simulating requests
 //  if(digitalRead(encButton) == LOW){
 //    verify = !verify;
 //    serverVertRequest[0] = valTest[verify];
 //  }
-//  delay(1);
+  delay(1);
 }
