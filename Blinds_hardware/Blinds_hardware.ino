@@ -15,7 +15,10 @@
  * - 220 Resistor (Encoder button pull up).
  * 
  * @section libraries Libraries
+ * - WiFi.h (https://www.arduino.cc/en/Reference/WiFi).
  * - RotaryEncoder.h (https://github.com/mathertel/RotaryEncoder).
+ * - PubSubClient.h (https://pubsubclient.knolleary.net).
+ * - ArduinoJson.h (https://arduinojson.org/?utm_source=meta&utm_medium=library.properties).
  * - EEPROM.h (https://github.com/PaulStoffregen/EEPROM).
  * 
  * @section author Author
