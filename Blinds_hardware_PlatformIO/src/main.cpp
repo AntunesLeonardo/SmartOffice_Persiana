@@ -42,7 +42,7 @@
 
 // Defines -----------------------------------------------------
 #define blindsNumber 1                                               ///< Number of blinds conected
-#define rotationTime 1000                                            ///< Time for rotating 60º at 100 rpm
+#define rotationTime 600                                            ///< Time for rotating 60º at 100 rpm
 
 // Blinds ID ---------------------------------------------------
 const char* blindID_0 = "001";
@@ -243,10 +243,10 @@ void rotateOpen(unsigned int i) {
     Serial.print(i);
     Serial.println(" - Open");
     digitalWrite(rotMotorA[i], LOW);
-    digitalWrite(rotMotorA[i], HIGH);
+    digitalWrite(rotMotorB[i], HIGH);
     delay(rotationTime);
     digitalWrite(rotMotorA[i], LOW);
-    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorB[i], LOW);
     bladePosition[i] = 0;
   }
 }
@@ -262,10 +262,10 @@ void rotateClose(unsigned int i) {
     Serial.print(i);
     Serial.println(" - Close");
     digitalWrite(rotMotorA[i], HIGH);
-    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorB[i], LOW);
     delay(rotationTime);
     digitalWrite(rotMotorA[i], LOW);
-    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorB[i], LOW);
     bladePosition[i] = 1;
   }
 }
@@ -367,6 +367,11 @@ void setup() {
     pinMode(vertMotorB[i], OUTPUT);
     pinMode(rotMotorA[i], OUTPUT);
     pinMode(rotMotorB[i], OUTPUT);
+
+    digitalWrite(vertMotorA[i], LOW);
+    digitalWrite(vertMotorB[i], LOW);
+    digitalWrite(rotMotorA[i], LOW);
+    digitalWrite(rotMotorB[i], LOW);
 
     // EEPROM read
     serverVertRequest[i] = EEPROM.read(i);
