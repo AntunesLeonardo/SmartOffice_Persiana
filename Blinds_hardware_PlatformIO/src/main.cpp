@@ -355,6 +355,7 @@ void setup() {
   // Serial and EEPROM begin
   Serial.begin(115200);
   EEPROM.begin(2*blindsNumber);
+  pinMode(LedAlert, OUTPUT);                                         // early pinMode for connection warning
 
   setup_wifi();
   client.setServer(mqttServer, mqttPort);
@@ -393,7 +394,6 @@ void setup() {
     // Reed Switch starting
     reedSwitch(i);
   }
-  pinMode(LedAlert, OUTPUT);
 }
 
 // -------------------------------------------------------------
