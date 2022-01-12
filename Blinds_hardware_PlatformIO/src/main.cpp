@@ -42,7 +42,8 @@
 
 // Defines -----------------------------------------------------
 #define blindsNumber 1                                               ///< Number of blinds conected
-#define rotationTime 600                                            ///< Time for rotating 60º at 100 rpm
+#define rotationTime 600                                             ///< Time for rotating 60º at 100 rpm
+#define connectionTime 30000                                         ///< Max time for wifi connection
 
 // Blinds ID ---------------------------------------------------
 const char* blindID_0 = "001";
@@ -97,7 +98,8 @@ void setup_wifi() {
   WiFi.begin((char*)ssid, password);
   //showConnectionWarningStatus();
   delay(200);
-  while (WiFi.status() != WL_CONNECTED) {
+  double iTime = millis();
+  while ((WiFi.status() != WL_CONNECTED) && (millis() < iTime + connectionTime)) {
     delay(500);
     Serial.print(".");
     //showWhiteWarningStatus();
@@ -111,17 +113,19 @@ void setup_wifi() {
 }
 
 /**
- * @brief 
+ * @brief Connect to mqtt client - if wifi not connected, show warning.
  * 
  */
 void reconnect() {
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    //showWhiteWarningStatus();
-    digitalWrite(LedAlert, HIGH);
-    delay(50);
-    digitalWrite(LedAlert, LOW);
-    delay(50);
+    for(int i=0; i<50; i++){
+        Serial.print(".");
+      digitalWrite(LedAlert, HIGH);
+      delay(100);
+      digitalWrite(LedAlert, LOW);
+      delay(100);
+    }
+    setup_wifi();
   }
   while (!client.connected()) {
     //showWhiteWarningStatus();
