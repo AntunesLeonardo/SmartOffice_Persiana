@@ -119,7 +119,7 @@ void setup_wifi() {
 void reconnect() {
   while (WiFi.status() != WL_CONNECTED) {
     for(int i=0; i<50; i++){
-        Serial.print(".");
+      Serial.print(".");
       digitalWrite(LedAlert, HIGH);
       delay(100);
       digitalWrite(LedAlert, LOW);
@@ -348,20 +348,13 @@ void reedSwitch(unsigned int i) {
 // =================================================================================== Setup - Loop
 
 /**
- * @brief Default setup function - pinMode definition and begining.
+ * @brief Default setup function - pinMode definition and initializing.
  * 
  */
 void setup() {
   // Serial and EEPROM begin
   Serial.begin(115200);
   EEPROM.begin(2*blindsNumber);
-  pinMode(LedAlert, OUTPUT);                                         // early pinMode for connection warning
-
-  setup_wifi();
-  client.setServer(mqttServer, mqttPort);
-  client.setCallback(callback);
-  reconnect();
-  client.subscribe(topic);
 
   for(int i=0; i<blindsNumber; i++){
     Serial.print("Setup For i");
@@ -394,6 +387,13 @@ void setup() {
     // Reed Switch starting
     reedSwitch(i);
   }
+  pinMode(LedAlert, OUTPUT);
+
+  setup_wifi();
+  client.setServer(mqttServer, mqttPort);
+  client.setCallback(callback);
+  reconnect();
+  client.subscribe(topic);
 }
 
 // -------------------------------------------------------------
@@ -410,5 +410,6 @@ void loop() {
       delay(1);
     }
   }
+  if(WiFi.status() != WL_CONNECTED) reconnect();
   delay(10);
 }
