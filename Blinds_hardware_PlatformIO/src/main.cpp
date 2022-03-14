@@ -31,7 +31,6 @@
 // ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 // ======================================================================================= Begining
 
-
 // Libraries ---------------------------------------------------
 #include <Arduino.h>
 #include <WiFi.h>
@@ -42,12 +41,12 @@
 
 // Defines -----------------------------------------------------
 #define blindsNumber 1                                               ///< Number of blinds conected
-#define rotationTime 600                                             ///< Time for rotating 60º at 100 rpm
+#define rotationTime 1200                                             ///< Time for rotating 60º at 100 rpm
 #define connectionTime 30000                                         ///< Max time for wifi connection
 
 // Blinds ID ---------------------------------------------------
 const char* blindID_0 = "001";
-const float unitPerMeter = (2*PI)*(16/1000);                         ///< Multiplier - units per meter
+const float unitPerMeter = (20)/(2*PI*16/1000);                      ///< Multiplier - units per meter
 
 // Pinout constants --------------------------------------------
 const unsigned int RSpin[blindsNumber] = {17};                       ///< Reed Switch input pin
@@ -61,8 +60,8 @@ const unsigned int LedAlert = 2;
 
 
 // Variables ---------------------------------------------------
-int serverVertRequest[blindsNumber] = {0};                           ///< Vertical position request from server - WIP
-int serverRotRequest[blindsNumber] = {0};                            ///< Blades rotation request from server - WIP
+int serverVertRequest[blindsNumber] = {0};                           ///< Vertical position request from MQTT
+int serverRotRequest[blindsNumber] = {0};                            ///< Blades rotation request from MQTT
 int blindPosition[blindsNumber] = {0};                               ///< Current position of the blinds
 int bladePosition[blindsNumber] = {0};                               ///< Corrent position of the blades
 
@@ -156,7 +155,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   serverVertRequest[0] = doc[blindID_0][0];                          ///< Read request in percentage
   serverVertRequest[0] *= (maxLength[0]/100);                        ///< Convert request to unit
 
-  serverRotRequest[0] = doc[blindID_0][1];
+  serverRotRequest[0] = doc[blindID_0][1];                           ///< Read request (0 or 1)
 
   Serial.println(serverVertRequest[0]);
   Serial.println(serverRotRequest[0]);
