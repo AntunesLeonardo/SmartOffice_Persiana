@@ -47,7 +47,8 @@
 
 // Blinds ID ---------------------------------------------------
 const char* blindID_0 = "001";
- 
+const float unitPerMeter = (2*PI)*(16/1000);                         ///< Multiplier - units per meter
+
 // Pinout constants --------------------------------------------
 const unsigned int RSpin[blindsNumber] = {17};                       ///< Reed Switch input pin
 const unsigned int encoderA[blindsNumber] = {5};                     ///< Encoder input port A pin
@@ -64,6 +65,9 @@ int serverVertRequest[blindsNumber] = {0};                           ///< Vertic
 int serverRotRequest[blindsNumber] = {0};                            ///< Blades rotation request from server - WIP
 int blindPosition[blindsNumber] = {0};                               ///< Current position of the blinds
 int bladePosition[blindsNumber] = {0};                               ///< Corrent position of the blades
+
+int maxLength[blindsNumber] = {10};                                  ///< Maximum length in units
+float meterLength[blindsNumber] = {0};                               ///< Maximum length in meter
 
 // Encoder pinout ----------------------------------------------
 RotaryEncoder encoder(encoderA[0], encoderB[0]);                     //   Rotary encoder library pinout
@@ -146,8 +150,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument <256> doc;
   deserializeJson(doc,payload);
 
-  serverVertRequest[0] = doc[blindID_0][0];
+  meterLength[0] = doc[blindID_0][2];                                ///< Read max length in meter
+  maxLength[0] = (int)unitPerMeter * (int)meterLength[0];            ///< Convert meter to unit
+
+  serverVertRequest[0] = doc[blindID_0][0];                          ///< Read request in percentage
+  serverVertRequest[0] *= (maxLength[0]/100);                        ///< Convert request to unit
+
   serverRotRequest[0] = doc[blindID_0][1];
+
   Serial.println(serverVertRequest[0]);
   Serial.println(serverRotRequest[0]);
 }
